@@ -2,13 +2,12 @@ var generators = require('yeoman-generator');
 var path = require('path');
 var _ = require('lodash');
 
-var utils = require('../lib/utils');
-var upperFirst = require("lodash.upperfirst");
-var utils = require('../lib/utils');
+var utils = require('../../../lib/utils');
+var upperFirst = require('lodash.upperfirst');
 
 module.exports = generators.Base.extend({
   templatePath: utils.templatePath(path.join('.donejs', 'templates', 'supermodel')),
-  
+
   constructor: function () {
     generators.Base.apply(this, arguments);
 
@@ -30,36 +29,36 @@ module.exports = generators.Base.extend({
   prompting: function () {
     var done = this.async();
 
-		this.prompt({
-			name: 'name',
-			type: String,
-			required: true,
-			message: 'The name for you model (e.g. order)',
-			when: !this.name
-		}, function (first) {
-			var name = this.name = this.name || first.name;
-			var prompts = [{
-				name: 'url',
-				message: 'What is the URL endpoint?',
-				default: '/' + name
-			}, {
-				name: 'idProp',
-				message: 'What is the property name of the id?',
-				default: 'id'
-			}];
+    this.prompt({
+      name: 'name',
+      type: String,
+      required: true,
+      message: 'The name for you model (e.g. order)',
+      when: !this.name
+    }, function (first) {
+      var name = this.name = this.name || first.name;
+      var prompts = [{
+        name: 'url',
+        message: 'What is the URL endpoint?',
+        default: '/' + name
+      }, {
+        name: 'idProp',
+        message: 'What is the property name of the id?',
+        default: 'id'
+      }];
 
-			this.prompt(prompts, function (props) {
-				this.props = _.extend(this.props, props);
+      this.prompt(prompts, function (props) {
+        this.props = _.extend(this.props, props);
 
-				done();
-			}.bind(this));
-		}.bind(this));
+        done();
+      }.bind(this));
+    }.bind(this));
   },
 
   writing: function () {
     var self = this;
     var done = this.async();
-    _.mixin(require("lodash-inflection"));
+    _.mixin(require('lodash-inflection'));
 
     var pkg = utils.getPkgOrBail(this, done);
     if(!pkg) {

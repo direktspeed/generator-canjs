@@ -23,22 +23,16 @@ A Yeoman generator for your CanJS application. Available generators are:
 
 ## Using generators
 
-__Important:__ While this repository is a Yeoman generator it should only be used directly with the CanJS cli instead of the `yo` command line.
-
-With the CLI installed via
-
-```
-npm install generator-canjs -g
-```
-
 The following commands are availbale. To initialize a new CanJS related project:
-
-- `yo canjs init [projectname]` create a new CanJS application
+- `yo canjs init` create a new CanJS application or add to existing.
 - `yo canjs plugin [projectname]` create a new CanJS plugin
-- `yo canjs init --type generator [projectname]` create a new generator project
+
 
 Within a CanJS application or plugin:
 
 - `yo canjs add component` to create a CanJS component
 - `yo canjs add supermodel` to create a can-connect connection
 - `yo canjs add module` to generate a general purpose modlet
+
+## using other generators
+- `yo canjs init --type generator [projectname]` create a new generator project

@@ -1,7 +1,7 @@
 var generators = require('yeoman-generator');
 var path = require('path');
 var _ = require('lodash');
-var utils = require('../lib/utils');
+var utils = require('../../../lib/utils');
 
 module.exports = generators.Base.extend({
   templatePath: utils.templatePath(path.join('.donejs', 'templates', 'component')),

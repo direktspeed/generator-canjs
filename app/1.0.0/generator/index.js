@@ -2,7 +2,7 @@ var generators = require('yeoman-generator');
 var path = require('path');
 var _ = require('lodash');
 var packages = require('./packages');
-var utils = require('../lib/utils');
+var utils = require('../../../lib/utils');
 
 module.exports = generators.Base.extend({
   initializing: function () {
@@ -91,16 +91,16 @@ module.exports = generators.Base.extend({
         email: this.props.authorEmail,
         url: this.props.authorUrl
       },
-      license: "MIT",
-      main: "lib/",
+      license: 'MIT',
+      main: 'lib/',
       scripts: {
-        test: "npm run jshint && npm run mocha",
-        jshint: "jshint test/. default/index.js --config",
-        mocha: "mocha test/ --timeout 120000",
-        publish: "git push origin --tags && git push origin",
-        'release:patch': "npm version patch && npm publish",
-        'release:minor': "npm version minor && npm publish",
-        'release:major': "npm version major && npm publish"
+        test: 'npm run jshint && npm run mocha',
+        jshint: 'jshint test/. default/index.js --config',
+        mocha: 'mocha test/ --timeout 120000',
+        publish: 'git push origin --tags && git push origin',
+        'release:patch': 'npm version patch && npm publish',
+        'release:minor': 'npm version minor && npm publish',
+        'release:major': 'npm version major && npm publish'
       },
       keywords: this.props.keywords
     });
@@ -119,7 +119,7 @@ module.exports = generators.Base.extend({
       // https://github.com/npm/npm/issues/3763
       self.fs.copyTpl(
         self.templatePath(name),
-        self.destinationPath((name === "_gitignore") ? ".gitignore" : name),
+        self.destinationPath((name === '_gitignore') ? '.gitignore' : name),
         self.props
       );
     });
