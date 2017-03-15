@@ -18,16 +18,12 @@ Tests can be run with
 npm test
 ```
 
-
-
 # Additional tools
 ```
 npm install generator-canjs -g # CanJS SDK
 npm install steal-server -g # Steal Packager and Server
 npm install jsdocs -g # Documentation Creation
 ```
-
-
 #NOTE: Integrate into steal-server
 
 ## Development mode // Should be replaced
@@ -46,7 +42,7 @@ done-serve --develop --port 8080
 To build the application into a production bundle run
 
 ```
-npm build
+npm run build
 // or
 node build.js
 //TODO: steal build

@@ -1,14 +1,13 @@
-var generators = require('yeoman-generator');
-var fs = require('fs');
+var BaseGenerator = require('../lib/baseGenerator');
 var path = require('path');
 var _ = require('lodash');
 var utils = require('../../../lib/utils');
 
-module.exports = generators.Base.extend({
-  templatePath: utils.templatePath(path.join('.donejs', 'templates', 'module')),
+module.exports = BaseGenerator.extend({
+  constructor: function(args, opts) {
+    BaseGenerator.call(this, args, opts);
 
-  constructor: function () {
-    generators.Base.apply(this, arguments);
+    this.templatePath = utils.templatePath(path.join('.donejs', 'templates', 'module'));
 
     this.argument('name', {
       type: String,
@@ -20,7 +19,7 @@ module.exports = generators.Base.extend({
       'module.js',
       'module.md',
       'test.html',
-      'module_test.js'
+      'module-test.js'
     ];
   },
 
@@ -29,10 +28,10 @@ module.exports = generators.Base.extend({
     this.prompt({
       name: 'name',
       message: 'What is the name of your module (e.g. my/module)?',
-      required: true,
-      when: !this.name
-    }, function (prompt) {
-      _.extend(this, prompt);
+      validate: utils.validateRequired,
+      when: !this.options.name
+    }).then(function(prompt) {
+      _.extend(this.options, prompt);
       done();
     }.bind(this));
   },
@@ -40,42 +39,44 @@ module.exports = generators.Base.extend({
   writing: function () {
     var self = this;
     var pkgFile = this.destinationPath('package.json');
-    var parts = this.name.split('/');
+    var parts = this.options.name.split('/');
     var name = _.last(parts);
     var pkg = this.fs.readJSON(pkgFile, false);
     if(pkg === false) {
-      self.log.error('No package.json file not found at '+pkgFile);
-      process.exit(1);
+      throw new Error('No package.json file not found at '+pkgFile);
     }
-    var folder = _.get(pkg, 'system.directories.lib');
+    var folder = _.get(pkg, 'steal.directories.lib');
     var appName = _.get(pkg, 'name');
 
     if (folder == null || appName == null) {
-      self.log.error('The \'name\' or \'system.directories.lib\' is not specified in your package.json file.');
-      process.exit(1);
+      throw new Error('The \'name\' or \'steal.directories.lib\' is not specified in your package.json file.');
     }
 
     var fullPath = [folder].concat(parts);
 
     var options = {
-			// ../ levels to go up to the root
+      // ../ levels to go up to the root
       root: _.repeat('../', fullPath.length),
-			// The full component path
+      // The full component path
       path: path.join.apply(path, fullPath),
-			// The short name of the component (e.g. list for restaurant/list)
+      // The short name of the component (e.g. list for restaurant/list)
       name: name,
       app: appName,
-			// The full module name (e.g. pmo/restaurant/list)
+      // The full module name (e.g. pmo/restaurant/list)
       module: [appName].concat(parts).join('/')
     };
 
     this.moduleFiles.forEach(function (name) {
       var target = name.replace('module', options.name);
       self.fs.copyTpl(
-          self.templatePath(name),
-          self.destinationPath(path.join(options.path, target)),
-          options
+        self.templatePath(name),
+        self.destinationPath(path.join(options.path, target)),
+        options
       );
     });
+
+    var mainTests = this.destinationPath(path.join(folder, 'test.js'));
+    utils.addImport(mainTests, [appName].concat(fullPath.slice(1)).join('/') +
+      '/' + name + '-test');
   }
 });

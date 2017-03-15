@@ -1,15 +1,6 @@
-var validate = require('validate-npm-package-name');
-var generators = require('yeoman-generator');
-
-var npmVersion = require('../lib/utils').npmVersion;
-
-module.exports = generators.Base.extend({
-  constructor: function () {
-    generators.Base.apply(this, arguments);
-    //console.log(arguments);
-    //this.option('name');
-  },
-  initializing: function () {
+const Generator = require('yeoman-generator');
+module.exports = class extends Generator {
+  initializing() {
     console.log(this.options.argv);
     this.pkg = this.fs.readJSON(this.destinationPath('package.json'), {});
 
@@ -43,13 +34,16 @@ module.exports = generators.Base.extend({
       'models/fixtures/fixtures.js',
       'models/test.js'
     ];
-  },
+  }
 
-  prompting: function () {
-    var done = this.async();
+  prompting() {
     // Check if we have already a app or plugin
     // Check current installed versions of app and plugin
-    var prompts = [{
+    function checkArgv() {
+      //!this.options.argv
+      return true;
+    }
+    return this.prompt([{
       name: 'version',
       type: 'list',
       message: 'CanJS Version 1.0 is using 3x and 0.9.6 is using 2.3 series',
@@ -60,27 +54,23 @@ module.exports = generators.Base.extend({
       type: 'list',
       message: 'type',
       default: 'app',
-      when: !this.options.argv.remain[0],
+      when: checkArgv,
       choices: ['app','plugin', 'component','module','supermodel']
-    }];
-
-    this.prompt(prompts, (props) => {
-      this.version = props.version;
-      this.composeWith('canjs:'+props.type, {
-        options: {
-          nested: true,
-          name: 'this.appName'
-        }
-      }, {
-        local: require.resolve(__dirname+'/'+this.version+'/'+props.type)
-      });
-
-      done();
+    }]).then((answers) => {
+      console.log(answers);
+      this.version = answers.version;
+      this.props = answers;
     });
-
-  },
-
-  end: function () {
-
   }
-});
+  default() {
+    this.composeWith(require.resolve(__dirname+'/'+this.version+'/'+this.props.type), {
+      soptions: {
+        nested: true,
+        name: 'this.appName'
+      }
+    });
+  }
+  end() {
+    console.log('END');
+  }
+};

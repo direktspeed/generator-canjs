@@ -1,15 +1,16 @@
 var validate = require('validate-npm-package-name');
-var generators = require('yeoman-generator');
+
 var path = require('path');
 var _ = require('lodash');
 var npmVersion = require('../../../lib/utils').npmVersion;
 
-module.exports = generators.Base.extend({
-  constructor: function () {
-    generators.Base.apply(this, arguments);
 
-    this.option('name');
-  },
+
+var BaseGenerator = require('../../../lib/baseGenerator');
+
+
+
+module.exports = BaseGenerator.extend({
 
   initializing: function () {
     this.pkg = this.fs.readJSON(this.destinationPath('package.json'), {});
@@ -24,23 +25,20 @@ module.exports = generators.Base.extend({
     };
 
     this.mainFiles = [
-      'readme.md',
-      'documentjs.json',
+      'README.md',
       '_gitignore',
       'build.js',
       'production.html',
-      'development.html'
+      'development.html',
+      'test.html'
     ];
 
     this.srcFiles = [
-      'test.html',
       'app.js',
       'index.stache',
       'index.md',
       'styles.less',
-      'test.html',
-      'test/test.js',
-      'test/functional.js',
+      'test.js',
       'models/fixtures/fixtures.js',
       'models/test.js'
     ];
@@ -129,32 +127,39 @@ module.exports = generators.Base.extend({
     var self = this;
     var pkgJsonFields = {
       name: pkgName,
-      version: this.options.version || '0.0.0',
+      version: this.pkg.version || '0.0.0',
       description: this.props.description,
       homepage: this.props.homepage,
-      repository: this.props.repository,
+      repository: this.pkg.repository,
       author: {
         name: this.props.authorName,
         email: this.props.authorEmail,
         url: this.props.authorUrl
       },
+      license: 'UNLICENSED',
+      private: true,
       scripts: {
-        test: 'testee ' + this.props.folder + '/test.html --browsers firefox --reporter Spec',
+        test: 'testee test.html --browsers firefox --reporter Spec',
         start: 'done-serve --port 8080',
         develop: 'done-serve --develop --port 8080',
-        document: 'documentjs',
         build: 'node build'
       },
       main: pkgMain,
       files: [this.props.folder],
       keywords: this.props.keywords,
-      system: {
+      steal: {
         main: pkgMain,
         directories: {
           lib: this.props.folder
         },
         configDependencies: [ 'live-reload', 'node_modules/can-zone/register' ],
-        transpiler: 'babel'
+        plugins: [ 'done-css', 'done-component', 'steal-less', 'steal-stache' ],
+        envs: {
+          'server-production': {
+            renderingBaseURL: '/dist'
+          }
+        },
+        serviceBaseURL: ''
       }
     };
 

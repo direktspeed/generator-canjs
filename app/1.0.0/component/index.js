@@ -1,13 +1,13 @@
-var generators = require('yeoman-generator');
+var BaseGenerator = require('../lib/baseGenerator');
 var path = require('path');
 var _ = require('lodash');
 var utils = require('../../../lib/utils');
 
-module.exports = generators.Base.extend({
-  templatePath: utils.templatePath(path.join('.donejs', 'templates', 'component')),
+module.exports = BaseGenerator.extend({
+  constructor: function(args, opts) {
+    BaseGenerator.call(this, args, opts);
 
-  constructor: function () {
-    generators.Base.apply(this, arguments);
+    this.templatePath = utils.templatePath(path.join('.donejs', 'templates', 'component'));
 
     this.argument('name', {
       type: String,
@@ -27,41 +27,42 @@ module.exports = generators.Base.extend({
       'modlet/component.md',
       'modlet/component.less',
       'modlet/component.stache',
-      'modlet/component_test.js',
+      'modlet/component-test.js',
       'modlet/test.html'
     ];
   },
 
-  prompting: function () {
+  prompting: function() {
     var done = this.async();
     this.prompt({
       name: 'name',
       message: 'What is the module name of your component (e.g. pmo/home or pmo/home.component)?',
-      required: true,
-      when: !this.name
-    }, function (first) {
-      var name = this.name = this.name || first.name;
+      validate: utils.validateRequired,
+      when: !this.options.name
+    }).then(function(first) {
+      var name = this.options.name = this.options.name || first.name;
 
-      this.isDoneComponent = this.name.indexOf('.component') !== -1;
-      this.name = name = name.replace('.component', '');
+      this.isDoneComponent = this.options.name.indexOf('.component') !== -1;
+      this.options.name = name = name.replace('.component', '');
 
       var tag = _.kebabCase(name);
       var prompts = [{
         name: 'tag',
         message: 'The tag name of the component',
         default: tag,
-        when: !this.tag
+        when: !this.options.tag,
+        validate: utils.validateTagName
       }];
 
-      this.prompt(prompts, function (props) {
-        _.extend(this, props);
+      this.prompt(prompts).then(function(props) {
+        _.extend(this.options, props);
 
         done();
       }.bind(this));
     }.bind(this));
   },
 
-  writing: function () {
+  writing: function() {
     var isDoneComponent = this.isDoneComponent;
     var self = this;
     var done = this.async();
@@ -71,9 +72,9 @@ module.exports = generators.Base.extend({
       return;
     }
 
-    var parts = this.name.split('/');
+    var parts = this.options.name.split('/');
     var name = _.last(parts);
-    var folder = _.get(pkg, 'system.directories.lib') || './';
+    var folder = _.get(pkg, 'steal.directories.lib') || './';
     var appName = _.get(pkg, 'name');
     // If we generate a component with the same name as the application
     var isRootComponent = name === appName;
@@ -85,44 +86,44 @@ module.exports = generators.Base.extend({
 
     var fullPath = isRootComponent ? [folder] : [folder].concat(parts);
 
-		// .component files don't go in their own folder
+    // .component files don't go in their own folder
     if (isDoneComponent) {
       fullPath.pop();
     }
 
     var options = {
-			// ../ levels to go up to the root
+      // ../ levels to go up to the root
       root: _.repeat('../', fullPath.length),
-			// The full component path
+      // The full component path
       path: path.join.apply(path, fullPath),
-			// The full tag name (prepending the short name if it isn't there yet)
-      tag: this.tag,
-			// The short name of the component (e.g. list for restaurant/list)
+      // The full tag name (prepending the short name if it isn't there yet)
+      tag: this.options.tag,
+      // The short name of the component (e.g. list for restaurant/list)
       name: name,
       app: appName,
-			// The full module name (e.g. pmo/restaurant/list)
+      // The full module name (e.g. pmo/restaurant/list)
       module: isRootComponent ? parts.join('/') : [appName].concat(parts).join('/')
     };
 
     if (isDoneComponent) {
       this.fs.copyTpl(
-					self.templatePath('component.component'),
-					self.destinationPath(path.join(options.path, options.name + '.component')),
-					options
-			);
+        __dirname+'/templates/component.component',
+        self.destinationPath(path.join(options.path, options.name + '.component')),
+        options
+      );
     } else {
       this.modletFiles.forEach(function (name) {
         var target = name.replace('component', options.name).replace('modlet/', '');
         self.fs.copyTpl(
-						self.templatePath(name),
-						self.destinationPath(path.join(options.path, target)),
-						options
-				);
+          __dirname+'/templates/'+name,
+          self.destinationPath(path.join(options.path, target)),
+          options
+        );
       });
 
-      var mainTests = this.destinationPath(path.join(folder, 'test', 'test.js'));
+      var mainTests = this.destinationPath(path.join(folder, 'test.js'));
       utils.addImport(mainTests, [appName].concat(fullPath.slice(1)).join('/') +
-        '/' + name + '_test');
+        '/' + name + '-test');
     }
     done();
   }

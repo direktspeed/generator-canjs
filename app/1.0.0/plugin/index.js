@@ -1,10 +1,11 @@
-var generators = require('yeoman-generator');
+var BaseGenerator = require('../../../lib/baseGenerator');
+const Generator = require('yeoman-generator');
 var path = require('path');
 var _ = require('lodash');
-var npmVersion = require('../../../lib/utils').npmVersion;
+var utils = require('../../../lib/utils');
+module.exports = class extends Generator {
+  initializing(args, opts) {
 
-module.exports = generators.Base.extend({
-  initializing: function () {
     this.pkg = this.fs.readJSON(this.destinationPath('package.json'), {});
 
     // Pre set the default props from the information we have at this point
@@ -17,24 +18,25 @@ module.exports = generators.Base.extend({
     };
 
     this.mainFiles = [
-      'documentjs.json',
-      'readme.md',
+      'CONTRIBUTING.md',
+      'README.md',
       '_gitignore',
-      'test/test.html',
-      'test/test.js',
+      'test.html',
+      'index.html'
     ];
 
     this.srcFiles = [
-      'plugin_test.js',
+      'plugin-test.js',
       'plugin.js',
-      'plugin.md'
+      'plugin.md',
+      'test.js'
     ];
-  },
+  }
 
-  prompting: function () {
+  prompting() {
     var done = this.async();
 
-    npmVersion(function(err, version){
+    utils.npmVersion(function(err, version){
       if(err) {
         done(err);
         return;
@@ -87,15 +89,15 @@ module.exports = generators.Base.extend({
         default: version.major
       }];
 
-      this.prompt(prompts, function (props) {
+      this.prompt(prompts).then(function(props) {
         this.props = _.extend(this.props, props);
         this.props.name = _.kebabCase(this.props.name);
         done();
       }.bind(this));
     }.bind(this));
-  },
+  }
 
-  writing: function () {
+  writing() {
     var self = this;
     var jshintFolder = this.props.folder && this.props.folder !== '.' ?
       ' ./' + this.props.folder + '/' : '';
@@ -115,16 +117,15 @@ module.exports = generators.Base.extend({
       },
       'scripts': {
         preversion: 'npm test && npm run build',
-        version: 'git commit -am "Update dist for release" && git checkout -b release && git add -f dist/',
-        postversion: 'git push --tags && git checkout master && git branch -D release && git push',
-        testee: 'testee test/test.html --browsers firefox',
+        version: 'git commit -am "Update version number" && git checkout -b release && git add -f dist/',
+        postpublish: 'git push --tags && git checkout master && git branch -D release && git push',
+        testee: 'testee test.html --browsers firefox',
         test: 'npm run jshint && npm run testee',
         jshint: 'jshint ./*.js' + jshintFolder + ' --config',
         'release:patch': 'npm version patch && npm publish',
         'release:minor': 'npm version minor && npm publish',
         'release:major': 'npm version major && npm publish',
         build: 'node build.js',
-        document: 'documentjs',
         develop: 'done-serve --static --develop --port 8080'
       },
       main: 'dist/cjs/' + this.props.name,
@@ -135,11 +136,10 @@ module.exports = generators.Base.extend({
         transform: [ 'cssify' ]
       },
       keywords: this.props.keywords,
-      system: {
+      steal: {
         main: this.props.name,
         configDependencies: [ 'live-reload' ],
         npmIgnore: [
-          'documentjs',
           'testee',
           'generator-donejs',
           'donejs-cli',
@@ -149,23 +149,21 @@ module.exports = generators.Base.extend({
     };
 
     if(this.props.folder && this.props.folder !== '.') {
-      pkgJsonFields.system.directories = { lib: this.props.folder };
+      pkgJsonFields.steal.directories = { lib: this.props.folder };
     }
 
-    if(this.props.npmVersion >= 3) {
-      pkgJsonFields.system.npmAlgorithm = 'flat';
+    if(this.props.npmVersion < 3) {
+      pkgJsonFields.steal.npmAlgorithm = 'nested';
     }
 
     if(!this.options.packages) {
-      // throw new Error('No DoneJS dependency package list provided!');
+      //throw new Error('No DoneJS dependency package list provided!');
       this.options.packages = require(__dirname+'/../package.json');
     }
 
     this.log('Writing package.json v' + this.options.version);
 
     var getDependency = function(name) {
-
-
       return self.options.packages.dependencies[name] ||
         self.options.packages.devDependencies[name];
     };
@@ -177,7 +175,6 @@ module.exports = generators.Base.extend({
         'cssify': '^0.6.0'
       },
       devDependencies: {
-        'documentjs': getDependency('documentjs'),
         'jshint': '^2.9.1',
         'steal': getDependency('steal'),
         'steal-qunit': getDependency('steal-qunit'),
@@ -197,24 +194,25 @@ module.exports = generators.Base.extend({
       // https://github.com/npm/npm/issues/3763
       self.fs.copyTpl(
         self.templatePath(name),
-        self.destinationPath((name === '_gitignore') ? '.gitignore' : name),
+        //self.destinationPath((name === '_gitignore') ? '.gitignore' : name),
+        self.destinationPath(name),
         self.props
       );
     });
 
     this.srcFiles.forEach(function(name) {
       self.fs.copyTpl(
-        self.templatePath(name),
+        __dirname+'/templates/'+name,
         self.destinationPath(path.join(self.props.folder, name.replace('plugin', self.props.name))),
         self.props
       );
     });
-  },
+  }
 
-  end: function () {
+  end() {
     if(!this.options.skipInstall) {
       var done = this.async();
       this.spawnCommand('npm', ['--loglevel', 'error', 'install']).on('close', done);
     }
   }
-});
+};

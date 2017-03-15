@@ -5,10 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/retro/generator-canjs/badge.svg?branch=master)](https://coveralls.io/github/retro/generator-canjs?branch=master)
 
 ## Changelog
-- Moved in donejs binary
-- Moved in donejs-cli
-- Stripped out done-* dependencies for projects as this gets extra option to add that as this is only ssr related stuff.
-- Moved donejs-cli dependencies that was a cli parm befor into the generator
+- Prepared move build and develop to steal-server.
 
 
 A Yeoman generator for your CanJS application. Available generators are:
