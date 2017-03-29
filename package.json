@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "coveralls-send": "0.0.2",
-    "donejs": "*",
+    "donejs": ">=1.0.0",
     "donejs-cli": "^0.8.0",
     "fs-extra": "^0.26.5",
     "istanbul": "^0.4.2",
